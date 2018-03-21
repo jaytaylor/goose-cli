@@ -6,21 +6,23 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/advancedlogic/GoOse"
+	"github.com/jaytaylor/GoOse"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
 
 var (
-	OutputFormat = "html"
+	OutputFormat string
+	Quiet        bool
 	Verbose      bool
 )
 
 func init() {
 	rootCmd.AddCommand(versionCmd)
-	rootCmd.PersistentFlags().StringVarP(&OutputFormat, "output", "o", "text", `Output format, one of "json", "html", "text", "yaml"; (default: text)`)
-	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "Activate verbose output")
+	rootCmd.PersistentFlags().StringVarP(&OutputFormat, "output", "o", "text", `Output format, one of "json", "html", "text", "yaml"`)
+	rootCmd.PersistentFlags().BoolVarP(&Quiet, "quiet", "q", false, "Activate quiet log output")
+	rootCmd.PersistentFlags().BoolVarP(&Verbose, "verbose", "v", false, "Activate verbose log output")
 }
 
 func Execute() {
@@ -29,15 +31,10 @@ func Execute() {
 	}
 }
 
-func errorExit(err interface{}) {
-	fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
-	os.Exit(1)
-}
-
 var rootCmd = &cobra.Command{
 	Use:   "extract",
-	Short: "Disambiguate an article from HTML content",
-	Long:  "Runs GoOse command-line client",
+	Short: "HTML article extractor",
+	Long:  "GoOse command-line client: Disambiguates an article from HTML content",
 	Args:  cobra.MinimumNArgs(1),
 	PreRun: func(_ *cobra.Command, _ []string) {
 		initLogging()
@@ -127,10 +124,18 @@ var versionCmd = &cobra.Command{
 	},
 }
 
+func errorExit(err interface{}) {
+	fmt.Fprintf(os.Stderr, "ERROR: %s\n", err)
+	os.Exit(1)
+}
+
 func initLogging() {
+	level := log.InfoLevel
 	if Verbose {
-		log.SetLevel(log.DebugLevel)
-	} else {
-		log.SetLevel(log.InfoLevel)
+		level = log.DebugLevel
 	}
+	if Quiet {
+		level = log.ErrorLevel
+	}
+	log.SetLevel(level)
 }
